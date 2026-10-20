@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="https://pyscript.net" />
-    <script type="module" src="https://pyscript.net"></script>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
 </head>
 <body>
+    <h1>My Python Web Page</h1>
+    
+    <!-- Create a dedicated div to hold your output -->
+    <div id="output-box"></div>
+
     <script type="py">
-        print("Hello")
+        # 1. Use display() instead of print() to inject directly into the page
+        from pyscript import display
+        display("Hello via display()!")
+
+        # 2. Or precisely target the HTML element above by its ID
+        display("Hello targeted box!", target="output-box")
     </script>
 </body>
 </html>
