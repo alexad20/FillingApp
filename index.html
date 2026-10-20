@@ -1,28 +1,261 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="https://pyscript.net/releases/2026.7.3/core.css" />
-    <script type="module" src="https://pyscript.net/releases/2026.7.3/core.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vending Restock Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #f4f6f8;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      font-size: 22px;
+      margin-top: 0;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .item-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .item-name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .item-max {
+      font-size: 12px;
+      color: #888;
+    }
+    .item-input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    input[type="number"] {
+      width: 64px;
+      height: 44px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    input[type="number"]:focus {
+      border-color: #007aff;
+      outline: none;
+      background-color: #fff;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #007aff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background-color 0.2s;
+    }
+    .btn:active {
+      background-color: #0056b3;
+    }
+    .btn-secondary {
+      background-color: #e5e5ea;
+      color: #333;
+      margin-top: 10px;
+    }
+    #results {
+      margin-top: 24px;
+      padding: 16px;
+      background-color: #f0f8ff;
+      border: 1px solid #bae0ff;
+      border-radius: 12px;
+      display: none;
+    }
+    #results h2 {
+      font-size: 18px;
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #0050b3;
+    }
+    .result-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .result-item {
+      font-size: 16px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #d9d9d9;
+      display: flex;
+      justify-content: space-between;
+    }
+    .result-item:last-child {
+      border-bottom: none;
+    }
+    .needed-count {
+      font-weight: bold;
+      color: #d9363e;
+    }
+    .total-summary {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid #bae0ff;
+      font-weight: bold;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
 </head>
 <body>
-    <h1>My Python Web Page</h1>
-    
-    <!-- Create a dedicated div to hold your output -->
-    <div id="output-box"></div>
 
-    <script type="py">
-        # 1. Use display() to inject directly into the page
-        from pyscript import display
-        dietCoke=15
-        dietCokeQuantity=int(input("Diet Coke:"))
-        dietCokeNeeded=0
-        if dietCokeQuantity<15:
-            dietCokeNeeded=15-dietCokeQuantity
-            display(f"You need {dietCokeNeeded} more Diet Cokes.")
-        else:
-            display("You have enough Diet Cokes.")
+  <div class="container">
+    <h1>Restock Calculator</h1>
+    <p class="subtitle">Enter current quantities to calculate what to bring</p>
 
-    </script>
+    <form id="restockForm" onsubmit="calculateRestock(event)">
+      <div id="itemsList"></div>
+
+      <button type="submit" class="btn">Calculate Restock Needed</button>
+      <button type="button" class="btn btn-secondary" onclick="clearInputs()">Clear All</button>
+    </form>
+
+    <div id="results">
+      <h2>Items Needed:</h2>
+      <ul id="resultList" class="result-list"></ul>
+      <div id="totalSummary" class="total-summary"></div>
+    </div>
+  </div>
+
+  <script>
+    // List of drinks and their maximum capacity
+    const drinks = [
+      { id: 'coke', name: 'Coke', max: 30 },
+      { id: 'dietCoke', name: 'Diet Coke', max: 15 },
+      { id: 'zeroCoke', name: 'Coke Zero', max: 15 },
+      { id: 'fanta', name: 'Fanta', max: 15 },
+      { id: 'sprite', name: 'Sprite', max: 15 },
+      { id: 'spriteZero', name: 'Sprite Zero', max: 15 },
+      { id: 'cherryCoke', name: 'Cherry Coke', max: 10 },
+      { id: 'vitaminWater', name: 'Vitamin Water', max: 10 },
+      { id: 'goldPeak', name: 'Gold Peak', max: 10 },
+      { id: 'smartWater', name: 'Smart Water', max: 20 },
+      { id: 'dasani', name: 'Dasani', max: 25 }
+    ];
+
+    // Render drink inputs dynamically
+    function initForm() {
+      const container = document.getElementById('itemsList');
+      container.innerHTML = '';
+
+      drinks.forEach(drink => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <div class="item-info">
+            <span class="item-name">${drink.name}</span>
+            <span class="item-max">Max: ${drink.max}</span>
+          </div>
+          <div class="item-input-group">
+            <input type="number" 
+                   id="${drink.id}" 
+                   min="0" 
+                   max="${drink.max}" 
+                   placeholder="0"
+                   inputmode="numeric">
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // Calculate how many drinks are needed
+    function calculateRestock(event) {
+      event.preventDefault();
+
+      const resultList = document.getElementById('resultList');
+      const resultsDiv = document.getElementById('results');
+      const totalSummary = document.getElementById('totalSummary');
+      
+      resultList.innerHTML = '';
+      let totalNeeded = 0;
+
+      drinks.forEach(drink => {
+        const input = document.getElementById(drink.id);
+        const currentQty = parseInt(input.value) || 0;
+
+        if (currentQty < drink.max) {
+          const needed = drink.max - currentQty;
+          totalNeeded += needed;
+
+          const li = document.createElement('li');
+          li.className = 'result-item';
+          li.innerHTML = `
+            <span>${drink.name}</span>
+            <span class="needed-count">${needed} needed</span>
+          `;
+          resultList.appendChild(li);
+        }
+      });
+
+      if (totalNeeded === 0) {
+        resultList.innerHTML = '<li class="result-item" style="color: #52c41a; font-weight: bold;">All items are fully stocked!</li>';
+        totalSummary.innerHTML = '';
+      } else {
+        totalSummary.innerHTML = `
+          <span>Total Items to Bring:</span>
+          <span style="color: #d9363e;">${totalNeeded}</span>
+        `;
+      }
+
+      resultsDiv.style.display = 'block';
+      resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Reset all input fields
+    function clearInputs() {
+      drinks.forEach(drink => {
+        document.getElementById(drink.id).value = '';
+      });
+      document.getElementById('results').style.display = 'none';
+    }
+
+    // Build the form on page load
+    window.onload = initForm;
+  </script>
 </body>
 </html>
