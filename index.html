@@ -12,12 +12,17 @@
     <div id="output-box"></div>
 
     <script type="py">
-        # 1. Use display() instead of print() to inject directly into the page
+        # 1. Use display() to inject directly into the page
         from pyscript import display
-        display("Hello via display()!")
+        dietCoke=15
+        dietCokeQuantity=int(input("Diet Coke:"))
+        dietCokeNeeded=0
+        if dietCokeQuantity<15:
+            dietCokeNeeded=15-dietCokeQuantity
+            display(f"You need {dietCokeNeeded} more Diet Cokes.")
+        else:
+            display("You have enough Diet Cokes.")
 
-        # 2. Or precisely target the HTML element above by its ID
-        display("Hello targeted box!", target="output-box")
     </script>
 </body>
 </html>
